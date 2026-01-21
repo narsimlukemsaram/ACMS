@@ -1,1 +1,67 @@
 Autonomous Crop Monitoring System – Embedded App
+
+===========================================================
+      SENSOR GUI ON RASPBERRY PI 5 - SETUP GUIDE
+===========================================================
+This guide covers the installation and execution of the 
+Sensor GUI for BMP280/BH1750 sensors and Camera Module 3.
+
+-----------------------------------------------------------
+1. PRE-REQUISITES
+-----------------------------------------------------------
+
+OS & SYSTEM:
+* OS: Raspbian OS Trixie (2025-12-04-raspios-trixie-arm64-full.img)
+* Hardware: Raspberry Pi 5
+* Enabled Interfaces: I2C, UART, and SSH
+  (Use 'sudo raspi-config' > Interface Options to enable)
+
+HARDWARE CONNECTIONS:
+* I2C Sensors: Connect BMP280 and BH1750 to I2C-1
+  - SDA: GPIO 2 (Pin 3)
+  - SCL: GPIO 3 (Pin 5)
+* Camera: Raspberry Pi Camera Module 3 (connected to CAM/DISP port)
+
+SYSTEM PACKAGES:
+$ sudo apt update
+$ sudo apt install rpi-libcamera-apps python3-venv python3-pip
+
+-----------------------------------------------------------
+2. ENVIRONMENT SETUP
+-----------------------------------------------------------
+
+1. Create Project Directory:
+   $ mkdir ~/acms_prj
+   $ cd ~/acms_prj
+
+2. Initialize Python Virtual Environment:
+   (The --system-site-packages flag ensures access to system camera libs)
+   $ python3 -m venv --system-site-packages env
+   $ source env/bin/activate
+
+3. Install Python Dependencies:
+   $ pip install PyQt6 Picamera2 smbus2 numpy
+
+-----------------------------------------------------------
+3. FILE STRUCTURE & EXECUTION
+-----------------------------------------------------------
+
+1. Setup GUI Directory:
+   $ mkdir gui
+
+2. Copy source files into the gui folder:
+   $ cp <source_path>/sensor_gui.py gui/
+   $ cp <source_path>/sensors_data.py gui/
+
+3. Ensure scripts are executable:
+   $ chmod +x gui/sensor_gui.py
+
+4. Run the GUI:
+   $ python3 gui/sensor_gui.py
+
+-----------------------------------------------------------
+NOTES:
+* Ensure your Camera Module 3 is detected using: rpicam-hello --list-cameras
+* If I2C sensors are not detected, run: i2cdetect -y 1
+===========================================================
+
