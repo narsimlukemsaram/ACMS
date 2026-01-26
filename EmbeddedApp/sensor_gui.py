@@ -169,7 +169,8 @@ class MainWindow(QMainWindow):
             ("Temperature", "°C"),
             ("Humidity", "%RH"),
             ("Pressure", "Pa"),
-            ("Light Intensity", "lux")
+            ("Light Intensity", "lux"),
+            ("CO\u2082", "ppm")
         ]
         self.env_card = SensorCard("Environmental Data", env_items)
         
@@ -267,6 +268,7 @@ class MainWindow(QMainWindow):
         # Simulate slight fluctuations
         import random
         h = 65.0 + random.uniform(-5, 5)
+        co2 = 425 + random.uniform(-25, 25)
         ph = 6.8 + random.uniform(-0.2, 0.2)
         sm = 35.0 + random.uniform(-2, 2)
 
@@ -274,6 +276,7 @@ class MainWindow(QMainWindow):
         self.env_card.update_value("Humidity", f"{h:8.2f}")
         self.env_card.update_value("Pressure", f"{p:8.2f}")
         self.env_card.update_value("Light Intensity", f"{l:>8.2f}")
+        self.env_card.update_value("CO\u2082", f"{int(co2):4d}")
         
         self.soil_card.update_value("pH Value", f"{ph:.2f}")
         self.soil_card.update_value("Soil Moisture", f"{sm:.1f}")
