@@ -1,7 +1,29 @@
-train: train/images
-val: val/images
-test: test/images
+train: train
+val: val
+test: test
 
-path: .
-nc: 5
-names: ["0", "1", "Fresh Tomato", "Rotten Tomato", "object"]
+nc: 10
+names: 
+  - Tomato___Bacterial_spot
+  - Tomato___Early_blight
+  - Tomato___Late_blight
+  - Tomato___Leaf_Mold
+  - Tomato___Septoria_leaf_spot
+  - Tomato___Spider_mites Two-spotted_spider_mite
+  - Tomato___Target_Spot
+  - Tomato___Tomato_Yellow_Leaf_Curl_Virus
+  - Tomato___Tomato_mosaic_virus
+  - Tomato___healthy
+
+# Recommended steps/remedies when a disease is detected
+remedies:
+  Tomato___Bacterial_spot: "Apply copper-based fungicides. Remove and destroy infected plant parts immediately to prevent spread."
+  Tomato___Early_blight: "Use organic fungicides like copper or sulfur. improve air circulation and avoid overhead watering."
+  Tomato___Late_blight: "Apply fungicides like Mancozeb or Chlorothalonil. Remove infected plants entirely if infestation is severe."
+  Tomato___Leaf_Mold: "Reduce humidity levels and increase airflow. Fungicides containing chlorothalonil can be effective."
+  Tomato___Septoria_leaf_spot: "Remove infected leaves. Apply organically approved fungicides and ensure crop rotation."
+  Tomato___Spider_mites Two-spotted_spider_mite: "Use insecticidal soap or neem oil. Introduce natural predators like ladybugs."
+  Tomato___Target_Spot: "Apply fungicides. Improve air circulation and keep foliage dry to prevent spread."
+  Tomato___Tomato_Yellow_Leaf_Curl_Virus: "No cure. Remove and destroy infected plants. Control whiteflies with sticky traps or insecticides."
+  Tomato___Tomato_mosaic_virus: "No cure. Remove infected plants. sanitize tools heavily (chlorine bleach) to prevent transmission."
+  Tomato___healthy: "Plant is healthy. Continue regular monitoring and maintenance (watering, fertilization)."

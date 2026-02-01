@@ -1,0 +1,8 @@
+tensorflow
+numpy
+matplotlib
+opencv-python
+scikit-learn
+pillow
+smbus2
+# Install PyQt6 using: conda install pyqt6
