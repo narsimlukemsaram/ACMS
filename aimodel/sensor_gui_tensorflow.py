@@ -28,10 +28,18 @@ from PyQt6.QtGui import QImage, QPixmap, QFont
 
 # TensorFlow imports
 try:
-    from tensorflow.keras.models import load_model
+    import tensorflow as tf
+    from tensorflow import keras
+    load_model = tf.keras.models.load_model
+    print("TensorFlow loaded successfully!")
 except ImportError:
-    print("Warning: tensorflow not found. AI features will be disabled.")
-    load_model = None
+    try:
+        import keras
+        load_model = keras.models.load_model
+        print("Keras loaded successfully!")
+    except ImportError:
+        print("Warning: tensorflow not found. AI features will be disabled.")
+        load_model = None
 
 try:
     from picamera2 import Picamera2
@@ -135,6 +143,62 @@ class SensorCard(QGroupBox):
         if key in self.value_labels:
             self.value_labels[key].setText(str(value))
 
+class GpsCard(QGroupBox):
+    def __init__(self, title, items):
+        super().__init__(title)
+        self.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
+        layout = QGridLayout()
+        layout.setHorizontalSpacing(20)
+        layout.setVerticalSpacing(15)
+
+        self.value_labels = {}
+        self.units = {}
+
+        for i, (label_text, unit) in enumerate(items):
+            # Label Name
+            name_lbl = QLabel(label_text + ":")
+            name_lbl.setFont(QFont("Segoe UI", 11))
+            name_lbl.setStyleSheet("color: #333;")
+
+            # Value Placeholder
+            val_lbl = QLabel("--")
+            val_lbl.setFont(QFont("Consolas", 12, QFont.Weight.Bold))
+            val_lbl.setStyleSheet("color: #007acc; background: #eef; padding: 4px 8px; border-radius: 4px; border: 1px solid #dde; min-width: 100px;")
+            val_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+            # Unit
+            unit_lbl = QLabel(unit)
+            unit_lbl.setFont(QFont("Segoe UI", 10, QFont.Weight.Light))
+            unit_lbl.setStyleSheet("color: #000; border: none; font-weight: bold;")
+
+            layout.addWidget(name_lbl, i, 0)
+            layout.addWidget(val_lbl, i, 1)
+            layout.addWidget(unit_lbl, i, 2)
+
+            self.value_labels[label_text] = val_lbl
+
+        self.setLayout(layout)
+
+        self.setStyleSheet("""
+            QGroupBox {
+                border: none;
+                margin-top: 1.2em;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 10px;
+                color: #2c3e50;
+                font-weight: bold;
+                font-size: 14px;
+            }
+        """)
+
+    def update_value(self, key, value):
+        if key in self.value_labels:
+            self.value_labels[key].setText(str(value))
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -144,7 +208,9 @@ class MainWindow(QMainWindow):
         # Load Remedies
         self.remedies = {}
         try:
-            data_yaml_path = os.path.join(BASE_DIR, 'data.yaml')
+            #data_yaml_path = os.path.join(BASE_DIR, 'data.yaml')
+            data_yaml_path = BASE_DIR + "/models/data.yaml"
+            print("Data file path: %s" %data_yaml_path)
             if os.path.exists(data_yaml_path):
                 with open(data_yaml_path, 'r') as f:
                     config = yaml.safe_load(f)
@@ -198,7 +264,8 @@ class MainWindow(QMainWindow):
         self.video_display = VideoLabel()
         
         # Test Static Image Button
-        self.btn_load_img = QPushButton("📁 Test Static Image")
+        #self.btn_load_img = QPushButton("📁 Test Static Image")
+        self.btn_load_img = QPushButton("Apply fungicides like Mancozeb or Chlorothalonil.\n Remove infected plants entirely if infestation is severe")
         self.btn_load_img.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
         self.btn_load_img.setStyleSheet("""
             QPushButton {
@@ -262,8 +329,16 @@ class MainWindow(QMainWindow):
         ]
         self.soil_card = SensorCard("Soil Status", soil_items)
         
+        # GPS Sensor Card
+        gps_items = [
+            ("Latitude", "° N"),
+            ("Longitude", "° E")
+        ]
+        self.gps_card = GpsCard("GPS Status", gps_items)
+
         right_layout.addWidget(self.env_card)
         right_layout.addWidget(self.soil_card)
+        right_layout.addWidget(self.gps_card)
         right_layout.addStretch() 
         
         # Add Sensors to Left (Stretch 2)
@@ -305,6 +380,7 @@ class MainWindow(QMainWindow):
         print("Attempting camera initialization...")
         
         if Picamera2 is not None:
+            print("Picamera2 is not None...")
             try:
                 self.picam2 = Picamera2()
                 config = self.picam2.create_preview_configuration(main={"format": 'RGB888', "size": (640, 480)})
@@ -322,10 +398,12 @@ class MainWindow(QMainWindow):
                 print(f"Picamera2 init failed (expected on non-Pi systems): {e}")
         
         # Fallback to OpenCV VideoCapture
-        print("Falling back to cv2.VideoCapture(0)...")
-        cap = cv2.VideoCapture(0)
+        #print("Falling back to cv2.VideoCapture(0)...")
+        print("Falling back to Picamera2.VideoCapture(0)...")
+        cap = Picamera2.VideoCapture(0)
         if cap.isOpened():
-            print("Success: Camera opened using cv2.VideoCapture(0).")
+            #print("Success: Camera opened using cv2.VideoCapture(0).")
+            print("Success: Camera opened using Picamera2.VideoCapture(0).")
             # Setup Sensors Data (also needed here)
             self.data_timer = QTimer()
             self.data_timer.timeout.connect(self.update_sensor_data)
@@ -452,7 +530,7 @@ class MainWindow(QMainWindow):
         final_output = np.vstack((header_img, cv_img_resized, footer_img))
         # Final output is BGR, convert to RGB for Qt
         final_output_rgb = cv2.cvtColor(final_output, cv2.COLOR_BGR2RGB)
-        
+
         # Update display
         h, w, ch = final_output_rgb.shape
         bytes_per_line = ch * w
@@ -480,12 +558,14 @@ class MainWindow(QMainWindow):
                 return
 
         # Handle cv2.VideoCapture
-        elif isinstance(self.cap, cv2.VideoCapture):
+        #elif isinstance(self.cap, cv2.VideoCapture):
+        elif isinstance(self.cap, Picamera2.VideoCapture):
              ret, frame = self.cap.read()
              if not ret:
                  return
              # OpenCV returns BGR, convert to RGB
-             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+             #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+             frame = Picamera2.cvtColor(frame, Picamera2.COLOR_BGR2RGB)
 
         if frame is None:
             return
@@ -564,6 +644,14 @@ class MainWindow(QMainWindow):
         
         self.soil_card.update_value("pH Value", f"{ph:.2f}")
         self.soil_card.update_value("Soil Moisture", f"{sm:.1f}")
+
+        #lati = random.uniform(-90, 90)
+        #long = random.uniform(-180, 180)
+        lati = 17.5 + random.uniform(-0.49, 0.49)
+        long = 78.5 + random.uniform(-0.49, 0.49)
+
+        self.gps_card.update_value("Latitude", f"{lati:.2f}")
+        self.gps_card.update_value("Longitude", f"{long:.1f}")
 
     def closeEvent(self, event):
         self.timer.stop()
